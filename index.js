@@ -96,8 +96,8 @@ Module.onRuntimeInitialized = (_) => {
     Module.HEAPU8.set(image.data, p);
 
     console.time("codeExecution c++");
-    // api.sobel(p, image.width, image.height);
-    api.gray_scale(p, image.width, image.height);
+    api.sobel(p, image.width, image.height);
+    // api.gray_scale(p, image.width, image.height);
     console.timeEnd("codeExecution c++");
 
     const resultPointer = api.get_result_pointer();
