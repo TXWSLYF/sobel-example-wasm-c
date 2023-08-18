@@ -1317,6 +1317,7 @@ var ___wasm_call_ctors = createExportWrapper('__wasm_call_ctors');
 var _create_buffer = Module['_create_buffer'] = createExportWrapper('create_buffer');
 var _destroy_buffer = Module['_destroy_buffer'] = createExportWrapper('destroy_buffer');
 var _sobel = Module['_sobel'] = createExportWrapper('sobel');
+var _gray_scale = Module['_gray_scale'] = createExportWrapper('gray_scale');
 var _free_result = Module['_free_result'] = createExportWrapper('free_result');
 var _get_result_pointer = Module['_get_result_pointer'] = createExportWrapper('get_result_pointer');
 var ___errno_location = createExportWrapper('__errno_location');

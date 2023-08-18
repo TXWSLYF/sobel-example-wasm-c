@@ -55,7 +55,6 @@ void sobel(uint8_t *img_in, int width, int height)
             int gradientMagnitude = sqrt(sumX * sumX + sumY * sumY);
             const int outputPixelIndex = (y * width + x) * 4;
 
-
             // int 转为 uint8_t 会溢出
             if (gradientMagnitude > 255)
             {
@@ -71,6 +70,40 @@ void sobel(uint8_t *img_in, int width, int height)
 
     result[0] = (int)img_out;
 }
+
+EMSCRIPTEN_KEEPALIVE
+void gray_scale(uint8_t *img_in, int width, int height)
+{
+    uint8_t *img_out;
+    img_out = (uint8_t *)malloc(width * height * 4 * sizeof(uint8_t));
+
+    // 遍历图像中的每个像素
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            // 计算当前像素的索引
+            const int pixelIndex = (y * width + x) * 4;
+
+            // 获取当前像素的颜色信息
+            const uint8_t red = img_in[pixelIndex];
+            const uint8_t green = img_in[pixelIndex + 1];
+            const uint8_t blue = img_in[pixelIndex + 2];
+            const uint8_t alpha = img_in[pixelIndex + 3];
+
+            // 计算灰度值
+            const uint8_t avg = (red + green + blue) / 3;
+
+            // 填充 grayScaleData
+            img_out[pixelIndex] = avg;
+            img_out[pixelIndex + 1] = avg;
+            img_out[pixelIndex + 2] = avg;
+            img_out[pixelIndex + 3] = alpha;
+        }
+    }
+
+    result[0] = (int)img_out;
+};
 
 EMSCRIPTEN_KEEPALIVE
 void free_result(uint8_t *result)

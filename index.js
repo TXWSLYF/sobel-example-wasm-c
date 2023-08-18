@@ -85,6 +85,7 @@ Module.onRuntimeInitialized = (_) => {
       "number",
     ]),
     destroy_buffer: Module.cwrap("destroy_buffer", "", ["number"]),
+    gray_scale: Module.cwrap("gray_scale", "", ["number", "number", "number"]),
     sobel: Module.cwrap("sobel", "", ["number", "number", "number"]),
     free_result: Module.cwrap("free_result", "", ["number"]),
     get_result_pointer: Module.cwrap("get_result_pointer", "number", []),
@@ -95,7 +96,8 @@ Module.onRuntimeInitialized = (_) => {
     Module.HEAPU8.set(image.data, p);
 
     console.time("codeExecution c++");
-    api.sobel(p, image.width, image.height);
+    // api.sobel(p, image.width, image.height);
+    api.gray_scale(p, image.width, image.height);
     console.timeEnd("codeExecution c++");
 
     const resultPointer = api.get_result_pointer();
