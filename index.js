@@ -1,11 +1,11 @@
-// const inputFile = document.getElementById("input-file");
+const inputFile = document.getElementById("input-file");
 const canvas1 = document.getElementById("canvas1");
 const canvas2 = document.getElementById("canvas2");
 const canvas3 = document.getElementById("canvas3");
 
-const ctx1 = canvas1.getContext("2d");
-const ctx2 = canvas2.getContext("2d");
-const ctx3 = canvas3.getContext("2d");
+const ctx1 = canvas1.getContext("2d", { willReadFrequently: true });
+const ctx2 = canvas2.getContext("2d", { willReadFrequently: true });
+const ctx3 = canvas3.getContext("2d", { willReadFrequently: true });
 
 async function loadImage(src) {
   // Load image
@@ -14,12 +14,6 @@ async function loadImage(src) {
   // Make canvas same size as image
   canvas1.width = img.width;
   canvas1.height = img.height;
-
-  canvas2.width = img.width;
-  canvas2.height = img.height;
-
-  canvas3.width = img.width;
-  canvas3.height = img.height;
 
   // Draw image
   ctx1.drawImage(img, 0, 0);
@@ -38,7 +32,7 @@ const Gy = [
 ];
 
 // Sobel image edge detection algorithm in Javascript
-function applySobel(imageData) {
+function sobelAlgorithm(imageData) {
   const width = imageData.width;
   const height = imageData.height;
   const outputData = new Uint8ClampedArray(imageData.data.length);
@@ -72,6 +66,42 @@ function applySobel(imageData) {
   return new ImageData(outputData, width, height);
 }
 
+// Detect image edges using the Sobel algorithm in both native JavaScript and WebAssembly, and draw them to canvas
+function appleSobelDrawImageData(api, imageData) {
+  const { width, height } = imageData;
+
+  canvas2.width = width;
+  canvas2.height = height;
+  canvas3.width = width;
+  canvas3.height = height;
+
+  const p = api.create_buffer(width, height);
+  Module.HEAPU8.set(imageData.data, p);
+
+  console.time("codeExecution c++");
+  api.sobel(p, width, height);
+  // api.gray_scale(p, image.width, image.height);
+  console.timeEnd("codeExecution c++");
+
+  const resultPointer = api.get_result_pointer();
+  const resultView = new Uint8ClampedArray(
+    Module.HEAPU8.buffer,
+    resultPointer,
+    width * height * 4
+  );
+  api.free_result(resultPointer);
+  api.destroy_buffer(p);
+
+  const outImageData = new ImageData(resultView, width, height);
+  ctx2.putImageData(outImageData, 0, 0);
+
+  console.time("codeExecution javascript");
+  const sobelData = sobelAlgorithm(imageData);
+  console.timeEnd("codeExecution javascript");
+
+  ctx3.putImageData(sobelData, 0, 0);
+}
+
 Module.onRuntimeInitialized = (_) => {
   // Create wrapper functions for all the exported C functions
   const api = {
@@ -86,31 +116,31 @@ Module.onRuntimeInitialized = (_) => {
     get_result_pointer: Module.cwrap("get_result_pointer", "number", []),
   };
 
-  loadImage("bocchi.JPG").then((image) => {
-    const p = api.create_buffer(image.width, image.height);
-    Module.HEAPU8.set(image.data, p);
+  loadImage("bocchi.JPG").then((imageData) => {
+    appleSobelDrawImageData(api, imageData);
+  });
 
-    console.time("codeExecution c++");
-    api.sobel(p, image.width, image.height);
-    // api.gray_scale(p, image.width, image.height);
-    console.timeEnd("codeExecution c++");
+  inputFile.addEventListener("change", (event) => {
+    const file = event.target.files[0];
 
-    const resultPointer = api.get_result_pointer();
-    const resultView = new Uint8ClampedArray(
-      Module.HEAPU8.buffer,
-      resultPointer,
-      image.width * image.height * 4
-    );
-    api.free_result(resultPointer);
-    api.destroy_buffer(p);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
 
-    const outImageData = new ImageData(resultView, image.width, image.height);
-    ctx2.putImageData(outImageData, 0, 0);
+        img.onload = function () {
+          const { width, height } = img;
+          canvas1.width = width;
+          canvas1.height = height;
+          ctx1.drawImage(img, 0, 0);
+          const imageData = ctx1.getImageData(0, 0, width, height);
 
-    console.time("codeExecution javascript");
-    const sobelData = applySobel(image);
-    console.timeEnd("codeExecution javascript");
+          appleSobelDrawImageData(api, imageData);
+        };
 
-    ctx3.putImageData(sobelData, 0, 0);
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
   });
 };
