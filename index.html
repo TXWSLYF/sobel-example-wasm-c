@@ -12,9 +12,19 @@
   </head>
   <body>
     <div><input type="file" id="input-file" /></div>
-    <canvas id="canvas1"></canvas>
-    <canvas id="canvas2"></canvas>
-    <canvas id="canvas3"></canvas>
+    <div>
+      <p>Original image</p>
+      <canvas id="canvas1"></canvas>
+    </div>
+    <div>
+      <p>WebAssembly sobel</p>
+      <canvas id="canvas2"></canvas>
+    </div>
+
+    <div>
+      <p>Javascript sobel</p>
+      <canvas id="canvas3"></canvas>
+    </div>
 
     <script src="./sobel.js"></script>
     <script src="./index.js"></script>
