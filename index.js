@@ -26,7 +26,6 @@ async function loadImage(src) {
   return ctx1.getImageData(0, 0, img.width, img.height);
 }
 
-// 定义水平和垂直方向的 Sobel 卷积核
 const Gx = [
   [-1, 0, 1],
   [-2, 0, 2],
@@ -38,42 +37,38 @@ const Gy = [
   [1, 2, 1],
 ];
 
-// 对灰度图像应用 Sobel 算法
+// Sobel image edge detection algorithm in Javascript
 function applySobel(imageData) {
   const width = imageData.width;
   const height = imageData.height;
   const outputData = new Uint8ClampedArray(imageData.data.length);
+
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       let sumX = 0;
       let sumY = 0;
+
       for (let j = 0; j < 3; j++) {
         for (let i = 0; i < 3; i++) {
           const pixelIndex = (y + j - 1) * width + (x + i - 1);
           const pixelValue = imageData.data[pixelIndex * 4];
           sumX += pixelValue * Gx[j][i];
           sumY += pixelValue * Gy[j][i];
-          if (y === 1 && x === 1) {
-            console.log(pixelValue);
-          }
         }
       }
+
       const gradientMagnitude = Math.sqrt(sumX * sumX + sumY * sumY);
-      const normalizedMagnitude = gradientMagnitude >>> 0; // 取整
+      // Rounding to an integer
+      const normalizedMagnitude = gradientMagnitude >>> 0;
 
       const outputPixelIndex = (y * width + x) * 4;
       outputData[outputPixelIndex] = normalizedMagnitude;
       outputData[outputPixelIndex + 1] = normalizedMagnitude;
       outputData[outputPixelIndex + 2] = normalizedMagnitude;
       outputData[outputPixelIndex + 3] = 255; // Alpha channel
-
-      if (y === 497 && x === 324) {
-        console.log(outputPixelIndex);
-        console.log(gradientMagnitude, normalizedMagnitude);
-        console.log(sumX, sumY);
-      }
     }
   }
+
   return new ImageData(outputData, width, height);
 }
 
@@ -91,7 +86,7 @@ Module.onRuntimeInitialized = (_) => {
     get_result_pointer: Module.cwrap("get_result_pointer", "number", []),
   };
 
-  loadImage("IMG_1254.JPG").then((image) => {
+  loadImage("bocchi.JPG").then((image) => {
     const p = api.create_buffer(image.width, image.height);
     Module.HEAPU8.set(image.data, p);
 
@@ -108,12 +103,13 @@ Module.onRuntimeInitialized = (_) => {
     );
     api.free_result(resultPointer);
     api.destroy_buffer(p);
+
     const outImageData = new ImageData(resultView, image.width, image.height);
     ctx2.putImageData(outImageData, 0, 0);
 
-    console.time("codeExecution js");
+    console.time("codeExecution javascript");
     const sobelData = applySobel(image);
-    console.timeEnd("codeExecution js");
+    console.timeEnd("codeExecution javascript");
 
     ctx3.putImageData(sobelData, 0, 0);
   });

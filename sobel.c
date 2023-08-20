@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <emscripten/emscripten.h>
-#include <stdint.h> // 包含 uint8_t 所在的头文件
+#include <stdint.h>
 
 EMSCRIPTEN_KEEPALIVE
 uint8_t *create_buffer(int width, int height)
@@ -55,7 +55,7 @@ void sobel(uint8_t *img_in, int width, int height)
             int gradientMagnitude = sqrt(sumX * sumX + sumY * sumY);
             const int outputPixelIndex = (y * width + x) * 4;
 
-            // int 转为 uint8_t 会溢出
+            // Converting an int to uint8_t may result in overflow
             if (gradientMagnitude > 255)
             {
                 gradientMagnitude = 255;
@@ -64,7 +64,8 @@ void sobel(uint8_t *img_in, int width, int height)
             img_out[outputPixelIndex] = gradientMagnitude;
             img_out[outputPixelIndex + 1] = gradientMagnitude;
             img_out[outputPixelIndex + 2] = gradientMagnitude;
-            img_out[outputPixelIndex + 3] = 255; // Alpha channel
+            // Alpha channel
+            img_out[outputPixelIndex + 3] = 255;
         }
     }
 
@@ -77,24 +78,24 @@ void gray_scale(uint8_t *img_in, int width, int height)
     uint8_t *img_out;
     img_out = (uint8_t *)malloc(width * height * 4 * sizeof(uint8_t));
 
-    // 遍历图像中的每个像素
+    // Iterate through each pixel in the image
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            // 计算当前像素的索引
+            // Calculate the index of the current pixel
             const int pixelIndex = (y * width + x) * 4;
 
-            // 获取当前像素的颜色信息
+            // Retrieve the color information of the current pixel
             const uint8_t red = img_in[pixelIndex];
             const uint8_t green = img_in[pixelIndex + 1];
             const uint8_t blue = img_in[pixelIndex + 2];
             const uint8_t alpha = img_in[pixelIndex + 3];
 
-            // 计算灰度值
+            // Calculate the grayscale value
             const uint8_t avg = (red + green + blue) / 3;
 
-            // 填充 grayScaleData
+            // Fill in the grayscale value
             img_out[pixelIndex] = avg;
             img_out[pixelIndex + 1] = avg;
             img_out[pixelIndex + 2] = avg;
